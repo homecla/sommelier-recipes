@@ -39,6 +39,7 @@ FONT_SMOOTHING=1
 REGISTRY='[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
 "name"="native,builtin"'
 INSTALLER_URL="https://…/setup.exe"  # https only
+INSTALLER_SHA256="…"                 # optional: 64 hex digits, the installer is refused if it differs
 INSTALLER_ARGS="/S"
 PROGRAM_NAME="Name"
 PROGRAM_PATH='C:\Program Files\App\app.exe|C:\Program Files (x86)\App\app.exe'
@@ -48,6 +49,10 @@ FIXES="steam-webhelper"              # enable Sommelier's built-in fixes by name
 
 Write every text in **both English and Italian**. Sommelier shows the user's language and
 falls back to the base value.
+
+Use `INSTALLER_SHA256` whenever the vendor publishes a fixed file (a versioned URL): Sommelier
+then refuses to run anything else. Leave it out only for "latest version" URLs, such as Steam's,
+whose content changes over time.
 
 `FIXES` can only name fixes built into Sommelier (today: `steam-webhelper`, see
 [fixes/steam-webhelper](https://github.com/homecla/sommelier/tree/main/fixes/steam-webhelper)).

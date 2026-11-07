@@ -1,4 +1,7 @@
 # SPDX-License-Identifier: CC0-1.0
+# Validates the recipes on every pull request and push; on pushes to main it also
+# regenerates catalog.json and commits it. Actions are pinned to full commit SHAs and only
+# the publish job can write to the repository.
 name: Recipe catalog / Catalogo ricette
 
 on:
@@ -8,26 +11,50 @@ on:
     branches: [main]
     paths: ["recipes/**", "tools/**", "build-catalog.sh"]
 
-permissions:
-  contents: write
+# No permissions by default; each job asks only for what it needs.
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  catalog:
+  check:
+    name: Validate recipes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read   # check out the recipes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
-      - name: Valida le ricette
+      - name: Valida le ricette / Validate recipes
         run: ./build-catalog.sh --check
 
-      - name: Rigenera catalog.json
-        if: github.event_name == 'push'
+  publish:
+    name: Regenerate catalog.json
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # commit the regenerated catalog.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Rigenera e pubblica / Regenerate and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           ./build-catalog.sh
           if ! git diff --quiet catalog.json; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add catalog.json
-            git commit -m "Aggiorna catalog.json"
-            git push
+            git commit -m "Update catalog.json"
+            # the token is used only for this push, not stored in the checkout
+            git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" HEAD:main
           fi

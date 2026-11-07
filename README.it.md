@@ -39,6 +39,7 @@ FONT_SMOOTHING=1
 REGISTRY='[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
 "nome"="native,builtin"'
 INSTALLER_URL="https://…/setup.exe"  # solo https
+INSTALLER_SHA256="…"                 # facoltativo: 64 cifre esadecimali, l'installer viene rifiutato se diverso
 INSTALLER_ARGS="/S"
 PROGRAM_NAME="Nome"
 PROGRAM_PATH='C:\Program Files\App\app.exe|C:\Program Files (x86)\App\app.exe'
@@ -48,6 +49,10 @@ FIXES="steam-webhelper"              # attiva per nome i correttivi integrati in
 
 Scrivi ogni testo **in inglese e in italiano**. Sommelier mostra la lingua dell'utente e,
 se manca la traduzione, usa il valore di base.
+
+Usa `INSTALLER_SHA256` ogni volta che il produttore pubblica un file fisso (un indirizzo con la
+versione): Sommelier si rifiuterà di eseguire qualsiasi altra cosa. Omettila solo per gli
+indirizzi "ultima versione", come quello di Steam, il cui contenuto cambia nel tempo.
 
 `FIXES` può solo nominare correttivi integrati in Sommelier (oggi: `steam-webhelper`, vedi
 [fixes/steam-webhelper](https://github.com/homecla/sommelier/tree/main/fixes/steam-webhelper)).
