@@ -1,14 +1,12 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 homecla
-# sommelier — installa, aggiorna e usa Wine (build ufficiali WineHQ) su macOS con un solo comando.
-#             Install, update and use Wine (official WineHQ builds) on macOS with a single command.
+# sommelier — install, update and use Wine (official WineHQ builds) on macOS with a single command.
 #
-# Le build macOS ufficiali di WineHQ sono pubblicate su / Official WineHQ macOS builds are published at
-# https://github.com/Gcenx/macOS_Wine_builds (linkate da / linked from wiki.winehq.org/MacOS).
-# Compatibile con il bash 3.2 di sistema, nessuna dipendenza esterna.
+# Official WineHQ macOS builds are published at
+# https://github.com/Gcenx/macOS_Wine_builds (linked from wiki.winehq.org/MacOS).
 # Works with the system bash 3.2, no external dependencies.
-# Lingua / Language: SOMMELIER_LANG=en|it (predefinita: lingua del Mac / default: the Mac's language)
+# Language: SOMMELIER_LANG=en|it (default: the Mac's language, falling back to English)
 
 set -u
 
@@ -16,7 +14,7 @@ TOOL_VERSION="1.0.0"
 REPO="Gcenx/macOS_Wine_builds"
 BRANCHES="stable devel staging"
 SUPPORT="${SOMMELIER_HOME:-$HOME/Library/Application Support/Sommelier}"
-# Migrazione dal nome precedente del progetto ("WineHQ Manager"): sposta bottiglie, ricette e impostazioni
+# Migration from the previous project name ("WineHQ Manager"): move bottles, recipes and settings
 LEGACY_SUPPORT="$HOME/Library/Application Support/WineHQ Manager"
 if [ -z "${SOMMELIER_HOME:-}" ] && [ -d "$LEGACY_SUPPORT" ] && [ ! -e "$SUPPORT" ]; then
   if mv "$LEGACY_SUPPORT" "$SUPPORT"; then
@@ -28,19 +26,19 @@ fi
 BOTTLES="$SUPPORT/Bottles"
 CACHE="$SUPPORT/cache"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# preset: utente > installati con install.sh > accanto allo script (repo o app)
+# Recipes: user > installed by install.sh > next to the script (repo or app)
 PRESET_DIRS="$SUPPORT/Presets:$HOME/.local/share/sommelier/presets:$SCRIPT_DIR/presets"
-CACHE_TTL=900   # secondi di validità della lista release
-MACHINE=0       # --machine: output leggibile dall'app grafica (@step/@progress/@error)
+CACHE_TTL=900   # seconds the release list stays valid
+MACHINE=0       # --machine: output for the app (@step/@progress/@error)
 REFRESH=0
 TMPDIR_INSTALL=""
 CURL_PID=""
 
-# Le app GUI non ereditano il PATH della shell: aggiungiamo Homebrew (cabextract, ecc.)
+# GUI apps don't inherit the shell PATH: add Homebrew (cabextract, etc.)
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-# ---------------------------------------------------------------- lingua / language
-# SOMMELIER_LANG=en|it forza la lingua; altrimenti segue il Mac (ripiego: inglese).
+# ---------------------------------------------------------------- language
+# SOMMELIER_LANG=en|it forces the language; otherwise follow the Mac (fallback: English).
 detect_lang() {
   case "${SOMMELIER_LANG:-}" in en|it) echo "$SOMMELIER_LANG"; return;; esac
   local l
@@ -49,8 +47,8 @@ detect_lang() {
   case "$l" in it*) echo it;; *) echo en;; esac
 }
 UI_LANG=$(detect_lang)
-t() { if [ "$UI_LANG" = en ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }   # t "italiano" "english"
-# messaggio: italiano (obbligatorio) ed eventuale inglese
+t() { if [ "$UI_LANG" = en ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }   # t "italian" "english"
+# message: Italian (required) and optional English
 msg() { if [ $# -ge 2 ] && [ "$UI_LANG" = en ]; then printf '%s' "$2"; else printf '%s' "$1"; fi; }
 yes_answer() { case "$1" in s|S|si|sì|Si|Sì|y|Y|yes|Yes) return 0;; esac; return 1; }
 
@@ -63,7 +61,7 @@ say()  { local m; m=$(msg "$@"); if [ $MACHINE = 1 ]; then echo "@step $m"; else
 warn() { local m; m=$(msg "$@"); if [ $MACHINE = 1 ]; then echo "@warn $m"; else printf '%s%s:%s %s\n' "$Y" "$(t attenzione warning)" "$N" "$m" >&2; fi; }
 die()  { local m; m=$(msg "$@"); if [ $MACHINE = 1 ]; then echo "@error $m"; else printf '%s%s:%s %s\n' "$R" "$(t errore error)" "$N" "$m" >&2; fi; exit 1; }
 
-progress() { # $1 = percentuale
+progress() { # $1 = percentage
   if [ $MACHINE = 1 ]; then echo "@progress $1"
   elif [ -t 2 ]; then
     local n=$(( $1 / 4 )) bar=""
@@ -86,21 +84,21 @@ default_branch() {
   is_branch "$b" && echo "$b" || echo stable
 }
 
-resolve_branch() { # "" / default -> ramo predefinito
+resolve_branch() { # "" / default -> default branch
   local b="${1:-}"
   if [ -z "$b" ] || [ "$b" = default ]; then default_branch; return; fi
   is_branch "$b" || die "ramo sconosciuto '$b' (usa: stable, devel, staging)" "unknown branch '$b' (use: stable, devel, staging)"
   echo "$b"
 }
 
-# ---------------------------------------------------------------- installazioni locali
+# ---------------------------------------------------------------- local installations
 
 install_dir() {
   if [ -n "${SOMMELIER_APPDIR:-}" ]; then mkdir -p "$SOMMELIER_APPDIR" && echo "$SOMMELIER_APPDIR"; return; fi
   if [ -w /Applications ]; then echo /Applications; else mkdir -p "$HOME/Applications"; echo "$HOME/Applications"; fi
 }
 
-find_app() { # trova l'app di un ramo dal bundle id, ovunque sia installata
+find_app() { # find a branch's app by bundle id, wherever it is installed
   local want="org.winehq.wine-$1.wine" d a id
   for d in ${SOMMELIER_APPDIR:+"$SOMMELIER_APPDIR"} /Applications "$HOME/Applications"; do
     for a in "$d"/Wine*.app; do
@@ -117,7 +115,7 @@ installed_version() {
   plutil -extract CFBundleShortVersionString raw -o - "$a/Contents/Info.plist" 2>/dev/null
 }
 
-wine_bin() { # percorso dell'eseguibile wine di un ramo
+wine_bin() { # path of a branch's wine executable
   local a; a=$(find_app "$1") || return 1
   [ -x "$a/Contents/Resources/wine/bin/wine" ] && echo "$a/Contents/Resources/wine/bin/wine"
 }
@@ -126,7 +124,7 @@ wine_running() { pgrep -f "$1/Contents/Resources/wine/" >/dev/null 2>&1; }
 
 has_rosetta() { arch -x86_64 /usr/bin/true >/dev/null 2>&1; }
 
-# ---------------------------------------------------------------- release remote
+# ---------------------------------------------------------------- remote releases
 
 fetch_releases() {
   mkdir -p "$CACHE"
@@ -146,7 +144,7 @@ fetch_releases() {
   echo "$f"
 }
 
-# Stampa, per ogni ramo, la build più recente:  ramo<TAB>versione<TAB>url<TAB>byte<TAB>digest<TAB>data
+# Prints the newest build of each branch:  branch<TAB>version<TAB>url<TAB>bytes<TAB>digest<TAB>date
 remote_table() {
   local f; f=$(fetch_releases) || exit 1
   osascript -l JavaScript - "$f" <<'JS' 2>/dev/null
@@ -173,17 +171,17 @@ JS
 }
 
 REMOTE=""
-load_remote() { # da chiamare nella shell principale (non in $(...)) prima di remote_field
+load_remote() { # call in the main shell (not inside $(...)) before remote_field
   [ -n "$REMOTE" ] && return 0
   REMOTE=$(remote_table)
   case "$REMOTE" in ERR*) rm -f "$CACHE/releases.json"; die "GitHub: $(printf '%s' "$REMOTE" | cut -f2)";; esac
   [ -n "$REMOTE" ] || die "impossibile leggere la lista delle versioni" "can't read the version list"
 }
-remote_field() { # $1 ramo, $2 colonna (2=versione 3=url 4=size 5=digest 6=data)
+remote_field() { # $1 branch, $2 column (2=version 3=url 4=size 5=digest 6=date)
   printf '%s\n' "$REMOTE" | awk -F'\t' -v b="$1" -v c="$2" '$1==b {print $c}'
 }
 
-# ---------------------------------------------------------------- comandi: versioni
+# ---------------------------------------------------------------- commands: versions
 
 cmd_status() {
   local json=0 remote=0 b
@@ -232,7 +230,7 @@ cleanup_install() {
   [ -n "$TMPDIR_INSTALL" ] && rm -rf "$TMPDIR_INSTALL"
 }
 
-download() { # url destinazione byte_attesi
+download() { # url destination expected_bytes
   curl -fL --retry 3 --retry-delay 2 -sS -o "$2" "$1" &
   CURL_PID=$!
   local cur pct last=-1
@@ -348,20 +346,20 @@ cmd_rosetta() {
   softwareupdate --install-rosetta --agree-to-license || die "installazione di Rosetta non riuscita" "Rosetta installation failed"
 }
 
-# ---------------------------------------------------------------- bottiglie
+# ---------------------------------------------------------------- bottles
 
 valid_name() {
   case "$1" in ""|.*|*/*|*\"*|*\\*) return 1;; esac
   [ ${#1} -le 64 ]
 }
 
-bottle_branch() { # ramo salvato nel bottle.json ("default" se assente)
+bottle_branch() { # branch saved in bottle.json ("default" if missing)
   local f="$1/bottle.json" b=""
   [ -f "$f" ] && b=$(grep -o '"branch"[[:space:]]*:[[:space:]]*"[a-z]*"' "$f" | head -1 | sed 's/.*"\([a-z]*\)"$/\1/')
   echo "${b:-default}"
 }
 
-# Opzioni comuni a run/kill/winetricks/bottle create: -b ramo, -B bottiglia, -p prefisso, --debug
+# Options shared by run/kill/winetricks/bottle create: -b branch, -B bottle, -p prefix, --debug
 CTX_BRANCH=""; CTX_PREFIX=""; CTX_BOTTLE=""; CTX_DEBUG=0; REST=()
 parse_ctx() {
   REST=()
@@ -377,7 +375,7 @@ parse_ctx() {
   done
 }
 
-setup_env() { # imposta WINEPREFIX, WINE*, PATH in base al contesto
+setup_env() { # set WINEPREFIX, WINE*, PATH from the context
   if [ -n "$CTX_BOTTLE" ]; then
     CTX_PREFIX="$BOTTLES/$CTX_BOTTLE"
     [ -d "$CTX_PREFIX" ] || die "la bottiglia '$CTX_BOTTLE' non esiste (sommelier bottle list)" "the bottle '$CTX_BOTTLE' doesn't exist (sommelier bottle list)"
@@ -458,7 +456,7 @@ cmd_bottle() {
   esac
 }
 
-# ---------------------------------------------------------------- esecuzione
+# ---------------------------------------------------------------- running programs
 
 cmd_run() {
   parse_ctx "$@"; set -- ${REST[@]+"${REST[@]}"}
@@ -474,7 +472,7 @@ cmd_run() {
       *)           cd "$(dirname "$t")" && exec "$WINE" "$t" "$@";;
     esac
   fi
-  exec "$WINE" "$t" "$@"   # comando interno: winecfg, regedit, cmd, control, explorer…
+  exec "$WINE" "$t" "$@"   # built-in command: winecfg, regedit, cmd, control, explorer…
 }
 
 cmd_kill() {
@@ -484,7 +482,7 @@ cmd_kill() {
 }
 
 WT=""
-ensure_winetricks() { # imposta $WT
+ensure_winetricks() { # sets $WT
   local wt="$SUPPORT/bin/winetricks" age=999999
   mkdir -p "$SUPPORT/bin"
   [ -f "$wt" ] && age=$(( $(date +%s) - $(stat -f %m "$wt") ))
@@ -507,13 +505,13 @@ cmd_winetricks() {
   exec "$WT" "$@"
 }
 
-# ---------------------------------------------------------------- preset (configurazioni predefinite)
+# ---------------------------------------------------------------- recipes (presets)
 #
-# Un preset ("ricetta") è un file NOME.preset di righe CHIAVE="valore" (vedi presets/steam.preset).
-# Il file NON viene eseguito: viene letto riga per riga e sono accettate solo queste chiavi:
+# A recipe is a NAME.preset file of KEY="value" lines (see presets/steam.preset).
+# The file is NEVER executed: it is read line by line and only these keys are accepted:
 PRESET_KEYS="TITLE DESCRIPTION NOTES TITLE_EN DESCRIPTION_EN NOTES_EN TITLE_IT DESCRIPTION_IT NOTES_IT ICON ORDER WINVER WINETRICKS FONT_SMOOTHING REGISTRY INSTALLER_URL INSTALLER_ARGS PROGRAM_NAME PROGRAM_PATH PROGRAM_ARGS SOURCE"
 USER_PRESETS="$SUPPORT/Presets"
-# Catalogo online delle ricette (impostabile con: sommelier catalog url URL)
+# Online recipe catalog (can be changed with: sommelier catalog url URL)
 DEFAULT_CATALOG="https://raw.githubusercontent.com/homecla/sommelier-recipes/main/catalog.json"
 
 preset_file() {
@@ -522,7 +520,7 @@ preset_file() {
   return 1
 }
 
-preset_ids() { # elenco senza duplicati, nell'ordine di precedenza
+preset_ids() { # list without duplicates, in order of precedence
   local IFS=: d f id seen=" "
   for d in $PRESET_DIRS; do
     for f in "$d"/*.preset; do
@@ -534,7 +532,7 @@ preset_ids() { # elenco senza duplicati, nell'ordine di precedenza
   done
 }
 
-# Stampa "CHIAVE<TAB>valore" (a capo codificati come \001). Valori tra "…" o '…', anche su più righe.
+# Prints "KEY<TAB>value" (newlines encoded as \001). Values in "…" or '…', possibly multi-line.
 parse_preset() {
   awk '
     BEGIN { inq = 0 }
@@ -558,7 +556,7 @@ parse_preset() {
     END { if (inq) print "!\tEOF" }' "$1"
 }
 
-# Carica e valida un file preset. In caso di errore stampa il motivo e restituisce 1.
+# Loads and validates a recipe file. On error, prints the reason and returns 1.
 load_preset_file() {
   TITLE=""; DESCRIPTION=""; ICON=""; NOTES=""; WINVER=""; WINETRICKS=""; FONT_SMOOTHING=0; REGISTRY=""
   INSTALLER_URL=""; INSTALLER_ARGS=""; PROGRAM_NAME=""; PROGRAM_PATH=""; PROGRAM_ARGS=""; ORDER=50; SOURCE=""
@@ -578,7 +576,7 @@ load_preset_file() {
   case "$ORDER" in ""|*[!0-9]*) ORDER=50;; esac
   case "$FONT_SMOOTHING" in 1) ;; *) FONT_SMOOTHING=0;; esac
   case "$ICON" in *[!a-z0-9.]*) ICON="";; esac
-  # testi nella lingua dell'interfaccia (i valori di base restano in BASE_*)
+  # texts in the UI language (base values are kept in BASE_*)
   BASE_TITLE="$TITLE"; BASE_DESCRIPTION="$DESCRIPTION"; BASE_NOTES="$NOTES"
   if [ "$UI_LANG" = en ]; then
     [ -n "$TITLE_EN" ] && TITLE="$TITLE_EN"; [ -n "$DESCRIPTION_EN" ] && DESCRIPTION="$DESCRIPTION_EN"; [ -n "$NOTES_EN" ] && NOTES="$NOTES_EN"
@@ -588,14 +586,14 @@ load_preset_file() {
   return 0
 }
 
-load_preset() { # carica il preset con questo id nella shell corrente
+load_preset() { # load the recipe with this id into the current shell
   local f err; f=$(preset_file "$1") || die "preset sconosciuto: '$1' (sommelier preset list)" "unknown recipe: '$1' (sommelier preset list)"
   err=$(load_preset_file "$f") || die "preset '$1' non valido: $err" "recipe '$1' is not valid: $err"
   load_preset_file "$f" >/dev/null
   [ -n "$TITLE" ] || TITLE="$1"
 }
 
-preset_summary() { # descrive cosa farà il preset caricato
+preset_summary() { # describe what the loaded recipe will do
   printf '  %s%s%s — %s\n' "$B" "$TITLE" "$N" "$DESCRIPTION"
   [ -n "$WINVER" ]        && printf '    • %s: %s\n' "$(t 'versione di Windows' 'Windows version')" "$WINVER"
   [ -n "$WINETRICKS" ]    && printf '    • winetricks: %s\n' "$WINETRICKS"
@@ -609,7 +607,7 @@ preset_summary() { # descrive cosa farà il preset caricato
 
 valid_preset_id() { case "$1" in ""|*[!a-z0-9_-]*) return 1;; esac; [ ${#1} -le 40 ]; }
 
-fetch_preset() { # $1 file o URL https -> copia in $2
+fetch_preset() { # $1 file or https URL -> copy to $2
   case "$1" in
     https://*) curl -fsSL --max-time 30 -o "$2" "$1" || die "download non riuscito: $1" "download failed: $1";;
     http://*)  die "usa un indirizzo https://" "use an https:// address";;
@@ -674,7 +672,7 @@ cmd_preset() {
         printf '%s' "$(t 'Questa ricetta scarica ed esegue un programma da internet. Aggiungerla? [s/N] ' 'This recipe downloads and runs a program from the internet. Add it? [y/N] ')"; read -r r
         yes_answer "$r" || { rm -f "$tmp"; t "Annullato." "Cancelled."; echo; return 1; }
       fi
-      if [ -n "$record" ]; then  # memorizza la fonte per "preset update"
+      if [ -n "$record" ]; then  # remember the source for "preset update"
         { grep -v '^SOURCE=' "$tmp"; printf 'SOURCE="%s"\n' "$record"; } > "$tmp.2" && mv "$tmp.2" "$tmp"
         SOURCE="$record"
       fi
@@ -727,21 +725,22 @@ cmd_preset() {
       local f="$USER_PRESETS/$id.preset"
       [ -e "$f" ] && die "esiste già: $f" "already exists: $f"
       cat > "$f" <<EOF
-# Preset personale "$id" — modifica i valori e salva. Righe CHIAVE="valore"; # = commento.
+# Ricetta personale / Personal recipe "$id" — modifica i valori e salva / edit the values and save.
+# Righe / Lines: CHIAVE="valore" / KEY="value"; # = commento / comment.
 TITLE="$id"
 DESCRIPTION="Descrizione breve"
-ICON="shippingbox"               # nome di un simbolo SF (facoltativo)
-NOTES=""                         # consigli mostrati all'utente
-TITLE_EN="$id"                   # traduzioni inglesi (e _IT se la base è in inglese)
+ICON="shippingbox"               # simbolo SF / SF Symbol name (optional)
+NOTES=""                         # consigli per l'utente / tips for the user
+TITLE_EN="$id"                   # traduzioni / translations (_EN, _IT)
 DESCRIPTION_EN="Short description"
 NOTES_EN=""
-ORDER=60                         # posizione nell'elenco
+ORDER=60                         # posizione / position in the list
 WINVER="win10"                   # win10, win7, winxp…
-WINETRICKS="corefonts"           # pacchetti winetricks separati da spazi
-FONT_SMOOTHING=1                 # 1 = antialiasing dei caratteri
-# INSTALLER_URL="https://…/setup.exe"   # installer da scaricare ed eseguire
-# INSTALLER_ARGS="/S"                   # argomenti per l'installazione silenziosa
-# PROGRAM_NAME="Nome"                   # programma da aggiungere all'elenco
+WINETRICKS="corefonts"           # pacchetti / packages (space-separated)
+FONT_SMOOTHING=1                 # 1 = antialiasing / font smoothing
+# INSTALLER_URL="https://…/setup.exe"   # installer da scaricare ed eseguire / installer to download and run
+# INSTALLER_ARGS="/S"                   # installazione silenziosa / silent install arguments
+# PROGRAM_NAME="Nome"                   # programma da aggiungere / program to add to the list
 # PROGRAM_PATH='C:\Program Files\App\app.exe|C:\Program Files (x86)\App\app.exe'
 # PROGRAM_ARGS=""
 # REGISTRY='[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
@@ -780,12 +779,12 @@ EOF
   esac
 }
 
-win_to_unix() { # $1 prefisso, $2 percorso C:\...  ->  percorso Unix
+win_to_unix() { # $1 prefix, $2 C:\... path  ->  Unix path
   local p="${2#[Cc]:}"
   printf '%s/drive_c%s' "$1" "$(printf '%s' "$p" | tr '\\' '/')"
 }
 
-bottle_json_update() { # dir nome_programma percorso argomenti preset
+bottle_json_update() { # dir program_name path arguments recipe
   osascript -l JavaScript - "$1/bottle.json" "$2" "$3" "$4" "$5" <<'JS' >/dev/null
 ObjC.import('Foundation');
 function run(a) {
@@ -805,7 +804,7 @@ function run(a) {
 JS
 }
 
-run_reg() { # importa testo .reg nella bottiglia corrente
+run_reg() { # import .reg text into the current bottle
   local tmp="$WINEPREFIX/drive_c/windows/temp/sommelier-preset.reg"
   mkdir -p "$(dirname "$tmp")"
   printf 'REGEDIT4\n\n%s\n' "$1" > "$tmp"
@@ -813,7 +812,7 @@ run_reg() { # importa testo .reg nella bottiglia corrente
   rm -f "$tmp"
 }
 
-apply_preset() { # $1 preset, $2 cartella bottiglia (ambiente già impostato con setup_env)
+apply_preset() { # $1 recipe, $2 bottle folder (environment already set by setup_env)
   local id="$1" dir="$2"
   load_preset "$id"
   say "Applico la configurazione «${TITLE}»" "Applying the recipe “${TITLE}”"
@@ -878,7 +877,7 @@ apply_preset() { # $1 preset, $2 cartella bottiglia (ambiente già impostato con
   return 0
 }
 
-cmd_start() { # avvia un programma salvato nella bottiglia
+cmd_start() { # launch a program saved in the bottle
   parse_ctx "$@"; set -- ${REST[@]+"${REST[@]}"}
   [ -n "$CTX_BOTTLE" ] || die "uso: sommelier start -B BOTTIGLIA [programma]" "usage: sommelier start -B BOTTLE [program]"
   local dir="$BOTTLES/$CTX_BOTTLE"
@@ -904,7 +903,7 @@ JS
   cmd_run -B "$CTX_BOTTLE" ${CTX_BRANCH:+-b "$CTX_BRANCH"} -- "$path" $args "$@"
 }
 
-# ---------------------------------------------------------------- catalogo online delle ricette
+# ---------------------------------------------------------------- online recipe catalog
 
 catalog_url() {
   if [ -n "${SOMMELIER_CATALOG:-}" ]; then echo "$SOMMELIER_CATALOG"; return; fi
@@ -912,7 +911,7 @@ catalog_url() {
   echo "$DEFAULT_CATALOG"
 }
 
-CATALOG=""   # righe separate da \037: id title description icon notes installs order file sha256 winver winetricks
+CATALOG=""   # \037-separated rows: id title description icon notes installs order file sha256 winver winetricks
 load_catalog() {
   [ -n "$CATALOG" ] && return 0
   local url f="$CACHE/catalog.json" age=999999
@@ -950,7 +949,7 @@ JS
 catalog_field() { printf '%s\n' "$CATALOG" | awk -F'\037' -v id="$1" -v c="$2" '$1==id {print $c; exit}'; }
 catalog_recipe_url() { local u; u=$(catalog_url); printf '%s%s' "${u%/*}/" "$1"; }
 
-# stato di una ricetta del catalogo: available | installed | update | builtin
+# state of a catalog recipe: available | installed | update | builtin
 catalog_state() {
   local id="$1" sha="$2" f="$USER_PRESETS/$1.preset"
   if [ -f "$f" ]; then
