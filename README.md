@@ -8,7 +8,7 @@ applies registry tweaks and, when needed, downloads and installs a program.
 
 ## Using the catalog
 
-Sommelier uses this catalog by default. In the app: **Recipes → Online Catalog**. From the terminal:
+Sommelier uses this catalog by default ([user guide](https://homecla.github.io/sommelier/)). In the app: **Recipes → Online Catalog**. From the terminal:
 
 ```sh
 sommelier catalog                 # list

@@ -8,7 +8,7 @@ componenti winetricks, applica modifiche al registro e, se serve, scarica e inst
 
 ## Usare il catalogo
 
-Sommelier usa questo catalogo come predefinito. Nell'app: **Ricette → Catalogo online**. Da terminale:
+Sommelier usa questo catalogo come predefinito ([guida utente](https://homecla.github.io/sommelier/#it)). Nell'app: **Ricette → Catalogo online**. Da terminale:
 
 ```sh
 sommelier catalog                 # elenco
