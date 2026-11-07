@@ -22,6 +22,8 @@ sommelier catalog update          # aggiorna le ricette installate dal catalogo
 2. Controlla che sia valida: `./build-catalog.sh --check`.
 3. Apri una pull request. Il workflow la valida e, dopo il merge, rigenera `catalog.json`.
 
+Proponendo una ricetta accetti di rilasciarla con licenza **CC0 1.0** (vedi [Licenza](#licenza)).
+
 ### Formato
 
 ```sh
@@ -52,3 +54,15 @@ con `INSTALLER_URL` scarica ed esegue un programma: chi la revisiona deve contro
 l'indirizzo sia quello ufficiale del produttore.
 
 `catalog.json` è generato automaticamente: non modificarlo a mano.
+
+## Licenza
+
+- **Ricette** (`recipes/`), `catalog.json`, documentazione e workflow sono dedicati al pubblico
+  dominio con [CC0 1.0](LICENSE): chiunque può riusarli liberamente, in qualsiasi progetto,
+  senza chiedere.
+- **Script** (`build-catalog.sh`, `tools/sommelier`) sono distribuiti con licenza
+  [GNU AGPL v3.0 o successiva](LICENSES/AGPL-3.0-or-later.txt), come
+  [Sommelier](https://github.com/homecla/sommelier/blob/main/README.it.md).
+
+Ogni file indica la sua licenza nell'intestazione `SPDX-License-Identifier`. I testi completi
+sono in [`LICENSES/`](LICENSES/). Il testo legale vincolante è quello inglese.

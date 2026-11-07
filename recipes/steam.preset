@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: CC0-1.0
 # Ricetta / Recipe: Steam
 # Ogni ricetta è un file CHIAVE="valore" letto (mai eseguito) da `sommelier`. / Each recipe is a KEY="value" file read (never executed) by `sommelier`.
 ORDER=10

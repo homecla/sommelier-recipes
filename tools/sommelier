@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 homecla
 # sommelier — installa, aggiorna e usa Wine (build ufficiali WineHQ) su macOS con un solo comando.
 #             Install, update and use Wine (official WineHQ builds) on macOS with a single command.
 #

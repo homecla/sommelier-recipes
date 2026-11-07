@@ -22,6 +22,8 @@ sommelier catalog update          # update recipes installed from the catalog
 2. Check that it is valid: `./build-catalog.sh --check`.
 3. Open a pull request. The workflow validates it, and after the merge it regenerates `catalog.json`.
 
+By contributing a recipe you agree to release it under **CC0 1.0** (see [License](#license)).
+
 ### Format
 
 ```sh
@@ -52,3 +54,15 @@ downloads and runs a program, so reviewers must check that the URL is the vendor
 official one.
 
 `catalog.json` is generated automatically: do not edit it by hand.
+
+## License
+
+- **Recipes** (`recipes/`), `catalog.json`, the documentation and the workflow are dedicated to
+  the public domain under [CC0 1.0](LICENSE): anyone can reuse them freely, in any
+  project, without asking.
+- **Scripts** (`build-catalog.sh`, `tools/sommelier`) are released under the
+  [GNU AGPL v3.0 or later](LICENSES/AGPL-3.0-or-later.txt), like
+  [Sommelier](https://github.com/homecla/sommelier).
+
+Each file states its license in the `SPDX-License-Identifier` header. The full texts are in
+[`LICENSES/`](LICENSES/).

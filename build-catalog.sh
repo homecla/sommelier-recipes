@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 homecla
 # Valida tutte le ricette in recipes/ e rigenera catalog.json.
 #   ./build-catalog.sh          valida e scrive catalog.json
 #   ./build-catalog.sh --check  valida soltanto (usato per le pull request)
