@@ -64,5 +64,10 @@ l'indirizzo sia quello ufficiale del produttore.
   [GNU AGPL v3.0 o successiva](LICENSES/AGPL-3.0-or-later.txt), come
   [Sommelier](https://github.com/homecla/sommelier/blob/main/README.it.md).
 
+CC0 riguarda solo i file delle ricette. Il software che una ricetta scarica (per esempio
+l'installer di Steam di Valve o i componenti Microsoft installati con winetricks) proviene dal
+suo produttore ed è soggetto alle sue condizioni di licenza. I nomi dei prodotti sono marchi
+dei rispettivi titolari e sono usati solo per descrivere cosa prepara una ricetta.
+
 Ogni file indica la sua licenza nell'intestazione `SPDX-License-Identifier`. I testi completi
 sono in [`LICENSES/`](LICENSES/). Il testo legale vincolante è quello inglese.

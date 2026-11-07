@@ -64,5 +64,10 @@ official one.
   [GNU AGPL v3.0 or later](LICENSES/AGPL-3.0-or-later.txt), like
   [Sommelier](https://github.com/homecla/sommelier).
 
+CC0 covers only the recipe files themselves. The software a recipe downloads (for example
+Valve's Steam installer or Microsoft components installed through winetricks) comes from its
+vendor and is subject to the vendor's license terms. Product names are trademarks of their
+owners and are used only to describe what a recipe sets up.
+
 Each file states its license in the `SPDX-License-Identifier` header. The full texts are in
 [`LICENSES/`](LICENSES/).
