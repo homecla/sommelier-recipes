@@ -24,7 +24,7 @@ done
 [ $CHECK = 1 ] && exit 0
 
 {
-  printf '{\n  "name": "Ricette Sommelier",\n  "format": 1,\n  "recipes": [\n'
+  printf '{\n  "name": "Sommelier recipes",\n  "format": 1,\n  "recipes": [\n'
   printf '%s' "$rows" | sort | cut -f3 | sed '$!s/$/,/' | sed 's/^/    /'
   printf '  ]\n}\n'
 } > catalog.json.tmp

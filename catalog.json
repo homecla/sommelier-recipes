@@ -1,5 +1,5 @@
 {
-  "name": "Ricette Sommelier",
+  "name": "Sommelier recipes",
   "format": 1,
   "recipes": [
     {"id":"steam","title":"Steam","description":"Scarica e installa il client Steam con le correzioni note per Wine su macOS.","icon":"gamecontroller.fill","notes":"I giochi DirectX 9 e molti indie girano bene. Con Wine «puro» su macOS i giochi DirectX 11/12 spesso no: servono D3DMetal o DXVK (CrossOver, Game Porting Toolkit). Se la finestra di Steam resta nera, chiudila e riavvia Steam dalla bottiglia.","title_en":"Steam","description_en":"Downloads and installs the Steam client with the known fixes for Wine on macOS.","notes_en":"DirectX 9 games and many indie games run well. With plain Wine on macOS, DirectX 11/12 games often don't: they need D3DMetal or DXVK (CrossOver, Game Porting Toolkit). If the Steam window stays black, close it and launch Steam again from the bottle.","title_it":"","description_it":"","notes_it":"","winver":"win10","winetricks":"corefonts","installs":true,"installer":"https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe","order":10,"file":"recipes/steam.preset","sha256":"0cf2269410a2621199568c78408e946f9c533584dfbe960ad2c1a72bdbc0954d","size":1954},

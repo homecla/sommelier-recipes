@@ -1,4 +1,4 @@
-name: Catalogo ricette
+name: Recipe catalog / Catalogo ricette
 
 on:
   pull_request:
