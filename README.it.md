@@ -43,10 +43,16 @@ INSTALLER_ARGS="/S"
 PROGRAM_NAME="Nome"
 PROGRAM_PATH='C:\Program Files\App\app.exe|C:\Program Files (x86)\App\app.exe'
 PROGRAM_ARGS="-opzione"
+FIXES="steam-webhelper"              # attiva per nome i correttivi integrati in Sommelier
 ```
 
 Scrivi ogni testo **in inglese e in italiano**. Sommelier mostra la lingua dell'utente e,
 se manca la traduzione, usa il valore di base.
+
+`FIXES` può solo nominare correttivi integrati in Sommelier (oggi: `steam-webhelper`, vedi
+[fixes/steam-webhelper](https://github.com/homecla/sommelier/tree/main/fixes/steam-webhelper)).
+I loro file arrivano dalle release di Sommelier, compilate dal sorgente da GitHub Actions e
+verificate con un'impronta SHA-256 fissata in Sommelier.
 
 Le ricette **non vengono mai eseguite**: Sommelier legge solo le chiavi elencate qui sopra.
 Non sono ammessi altri comandi né caratteri speciali della shell negli argomenti. Una ricetta

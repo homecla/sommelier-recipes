@@ -43,10 +43,16 @@ INSTALLER_ARGS="/S"
 PROGRAM_NAME="Name"
 PROGRAM_PATH='C:\Program Files\App\app.exe|C:\Program Files (x86)\App\app.exe'
 PROGRAM_ARGS="-option"
+FIXES="steam-webhelper"              # enable Sommelier's built-in fixes by name
 ```
 
 Write every text in **both English and Italian**. Sommelier shows the user's language and
 falls back to the base value.
+
+`FIXES` can only name fixes built into Sommelier (today: `steam-webhelper`, see
+[fixes/steam-webhelper](https://github.com/homecla/sommelier/tree/main/fixes/steam-webhelper)).
+Their files come from Sommelier's own releases, built from source by CI and checked with a
+SHA-256 pinned in Sommelier.
 
 Recipes are **never executed**: Sommelier reads only the keys listed above. Other commands
 and shell special characters in arguments are not allowed. A recipe with `INSTALLER_URL`
